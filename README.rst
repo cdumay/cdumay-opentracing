@@ -15,6 +15,9 @@ cdumay-opentracing
    :target: http://cdumay-opentracing.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
+Goal
+====
+
 cdumay-opentracing is a python library to facilitate opentracing integration using class drivers.
 
 Install
