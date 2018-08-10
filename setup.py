@@ -12,7 +12,7 @@ setup(
     name='cdumay-opentracing',
     version=open('VERSION', 'r').read().strip(),
     description="",
-    long_description="",
+    long_description=open('README.rst', 'r').read().strip(),
     classifiers=["Programming Language :: Python", ],
     keywords='',
     author='Cedric DUMAY',
