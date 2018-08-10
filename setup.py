@@ -11,7 +11,7 @@ from setuptools import setup, find_packages
 setup(
     name='cdumay-opentracing',
     version=open('VERSION', 'r').read().strip(),
-    description="",
+    description="Library to facilitate opentracing integration",
     long_description=open('README.rst', 'r').read().strip(),
     classifiers=["Programming Language :: Python", ],
     keywords='',

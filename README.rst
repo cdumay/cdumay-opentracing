@@ -12,6 +12,9 @@
    :target: http://cdumay-opentracing.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
+.. image:: https://img.shields.io/badge/license-MIT-blue.svg
+    :target: https://github.com/cdumay/kser/blob/master/LICENSE
+
 ******************
 cdumay-opentracing
 ******************
