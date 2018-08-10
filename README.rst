@@ -1,6 +1,3 @@
-******************
-cdumay-opentracing
-******************
 
 .. image:: https://img.shields.io/pypi/v/cdumay-opentracing.svg
    :target: https://pypi.python.org/pypi/cdumay-opentracing/
@@ -15,8 +12,9 @@ cdumay-opentracing
    :target: http://cdumay-opentracing.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
-Goal
-====
+******************
+cdumay-opentracing
+******************
 
 cdumay-opentracing is a python library to facilitate opentracing integration using class drivers.
 
