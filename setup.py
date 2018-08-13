@@ -24,4 +24,7 @@ setup(
     include_package_data=True,
     zip_safe=True,
     install_requires=open('requirements.txt', 'r').read().strip(),
+    extras_require={
+        'flask': ['Flask'],
+    }
 )

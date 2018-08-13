@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 class OpenTracingDriver(object):
     FORMAT = opentracing.Format.TEXT_MAP
+    TAGS = []
 
     @classmethod
     def extract(cls, data):
