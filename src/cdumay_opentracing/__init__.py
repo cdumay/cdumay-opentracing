@@ -98,6 +98,7 @@ class OpenTracingManager(object):
                 "Only class which implement OpenTracingDriver are allowed"
             )
         OpenTracingManager._registry[clazz] = driver
+        logger.debug("Registered {} for {}".format(driver, clazz))
 
     @classmethod
     def get_driver(cls, obj):
@@ -130,14 +131,22 @@ class OpenTracingManager(object):
         return driver.tags(obj) if driver else dict()
 
     @classmethod
-    def get_current_span(cls):
+    def get_current_span(cls, obj):
         """ Get the current span
 
+        :param Any obj: Any object
         :return: The current span
         :rtype: opentracing.span.Span or None
         """
         if len(OpenTracingManager._spans) > 0:
             return OpenTracingManager._spans[-1]
+        else:
+            driver = cls.get_driver(obj)
+            if driver:
+                try:
+                    return driver.extract(obj)
+                except:
+                    pass
 
     @classmethod
     def create_span(cls, obj, name, tags=None):
@@ -149,7 +158,7 @@ class OpenTracingManager(object):
         :return: Span
         :rtype: opentracing.span.Span
         """
-        parent = cls.get_current_span()
+        parent = cls.get_current_span(obj)
         driver = cls.get_driver(obj)
         span_tags = tags or dict()
 
