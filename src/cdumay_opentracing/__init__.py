@@ -79,7 +79,7 @@ class OpenTracingSpan(object):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Context guard used by the with statement"""
-        OpenTracingManager.finish_span()
+        OpenTracingManager.finish_span(self._span)
 
 
 class OpenTracingManager(object):
@@ -183,6 +183,12 @@ class OpenTracingManager(object):
 
         if span:
             span.finish()
+
+    @classmethod
+    def finish_all(cls):
+        for span in OpenTracingManager._spans[::-1]:
+            span.finish()
+        OpenTracingManager._spans = list()
 
     @classmethod
     def log_kv(cls, span, obj, event, **kwargs):
