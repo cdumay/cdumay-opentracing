@@ -96,7 +96,6 @@ class SpanProxy(object):
 
         :return: returns the Span itself
         """
-        print("---------------->>>>>>>>>>", self.__class__.__name__)
         if self not in OpenTracingManager._proxies:
             OpenTracingManager._proxies.append(self)
         self.prerun(self.span, self.obj)
