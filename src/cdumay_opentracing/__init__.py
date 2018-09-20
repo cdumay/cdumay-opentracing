@@ -120,7 +120,10 @@ class Tracer(jaeger_client.Tracer):
         tags = tags or dict()
         parent = child_of
         if parent is None:
-            parent = span_factory.extract(obj) if obj else self.current_span
+            if obj:
+                parent = span_factory.extract(obj)
+            if parent is None:
+                parent = self.current_span
 
         if references:
             if isinstance(references, list):
