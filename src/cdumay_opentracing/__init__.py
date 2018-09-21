@@ -90,6 +90,7 @@ class Span(jaeger_client.Span):
     def finish(self, finish_time=None):
         self._postrun(self, self.obj)
         jaeger_client.Span.finish(self, finish_time)
+        opentracing.tracer.remove_span(self)
 
 
 class Tracer(jaeger_client.Tracer):
@@ -188,6 +189,11 @@ class Tracer(jaeger_client.Tracer):
     def current_span(self):
         if len(self.CACHE) > 0:
             return self.CACHE[-1]
+
+    @classmethod
+    def remove_span(cls, span=None):
+        if span in cls.CACHE:
+            cls.CACHE.remove(span)
 
 
 class Config(jaeger_client.Config):
