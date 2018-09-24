@@ -13,10 +13,57 @@ from jaeger_client.constants import SAMPLED_FLAG, DEBUG_FLAG
 from opentracing.ext import tags as ext_tags
 
 
+def tag2value(tag):
+    for attr in ('vBinary', 'vStr', 'vDouble', 'vBool', 'vLong'):
+        value = getattr(tag, attr)
+        if value:
+            return tag.key, value
+    return tag.key, None
+
+
 class Span(jaeger_client.Span):
     """"""
     FORMAT = opentracing.Format.TEXT_MAP
     TAGS = []
+
+    @classmethod
+    def span_from_object(cls, obj):
+        if obj:
+            ctx = dict()
+            for attr in ('trace_id', 'span_id', 'parent_id', 'flags'):
+                ctx[attr] = getattr(obj, attr, None)
+            context = jaeger_client.SpanContext(**ctx)
+
+            return cls(
+                context=context, tracer=opentracing.tracer, obj=obj,
+                operation_name=getattr(obj, 'operation_name', None),
+                tags=getattr(obj, 'tags', cls.extract_tags(obj)),
+                start_time=getattr(obj, 'start_time', None)
+            )
+
+    @classmethod
+    def span_from_dict(cls, obj):
+        if len(obj) > 0:
+            ctx = dict()
+            for attr in ('trace_id', 'span_id', 'parent_id', 'flags'):
+                ctx[attr] = obj.get(attr, None)
+            context = jaeger_client.SpanContext(**ctx)
+
+            return cls(
+                context=context, tracer=opentracing.tracer, obj=obj,
+                operation_name=obj.get('operation_name'),
+                tags=obj.get('tags', cls.extract_tags(obj)),
+                start_time=obj.get('start_time')
+            )
+
+    @classmethod
+    def span_serialize(cls, span, factory=dict):
+        return factory(
+            trace_id=span.context.trace_id, span_id=span.context.span_id,
+            parent_id=span.context.parent_id, flags=span.context.flags,
+            operation_name=span.operation_name, start_time=span.start_time,
+            tags=dict([tag2value(x) for x in span.tags])
+        )
 
     @classmethod
     def name(cls, obj):
@@ -27,6 +74,14 @@ class Span(jaeger_client.Span):
         :rtype: str
         """
         return str(obj)
+
+    @classmethod
+    def extract_span(cls, obj):
+        return cls.span_from_dict(obj)
+
+    @classmethod
+    def inject_span(cls, span, obj):
+        obj.update(cls.span_serialize(span))
 
     @classmethod
     def extract(cls, obj):
@@ -90,15 +145,13 @@ class Span(jaeger_client.Span):
     def finish(self, finish_time=None):
         self._postrun(self, self.obj)
         jaeger_client.Span.finish(self, finish_time)
-        opentracing.tracer.remove_span(self)
 
 
 class Tracer(jaeger_client.Tracer):
-    CACHE = list()
 
     def start_span(self, operation_name=None, child_of=None, references=None,
                    tags=None, start_time=None, span_factory=Span,
-                   obj=None, use_cache=False):
+                   obj=None):
         """
         Start and return a new Span representing a unit of work.
 
@@ -115,7 +168,6 @@ class Tracer(jaeger_client.Tracer):
             time.time()
         :param ExtendedSpan span_factory: Alternate span factory
         :param Any obj: object to use as context
-        :param try to get context from singleton cache if no context found
 
         :return: Returns an already-started Span instance.
         """
@@ -124,8 +176,6 @@ class Tracer(jaeger_client.Tracer):
         if parent is None:
             if obj:
                 parent = span_factory.extract(obj)
-            if (parent is None) and (use_cache is True):
-                parent = self.current_span
 
         if references:
             if isinstance(references, list):
@@ -182,19 +232,8 @@ class Tracer(jaeger_client.Tracer):
             context=span_ctx, tracer=self, operation_name=operation_name,
             tags=tags, start_time=start_time, obj=obj
         )
-        Tracer.CACHE.append(span)
         self._emit_span_metrics(span=span, join=rpc_server)
         return span
-
-    @property
-    def current_span(self):
-        if len(self.CACHE) > 0:
-            return self.CACHE[-1]
-
-    @classmethod
-    def remove_span(cls, span=None):
-        if span in cls.CACHE:
-            cls.CACHE.remove(span)
 
 
 class Config(jaeger_client.Config):
