@@ -98,7 +98,7 @@ class Tracer(jaeger_client.Tracer):
 
     def start_span(self, operation_name=None, child_of=None, references=None,
                    tags=None, start_time=None, span_factory=Span,
-                   obj=None):
+                   obj=None, use_cache=False):
         """
         Start and return a new Span representing a unit of work.
 
@@ -115,6 +115,7 @@ class Tracer(jaeger_client.Tracer):
             time.time()
         :param ExtendedSpan span_factory: Alternate span factory
         :param Any obj: object to use as context
+        :param try to get context from singleton cache if no context found
 
         :return: Returns an already-started Span instance.
         """
@@ -123,7 +124,7 @@ class Tracer(jaeger_client.Tracer):
         if parent is None:
             if obj:
                 parent = span_factory.extract(obj)
-            if parent is None:
+            if (parent is None) and (use_cache is True):
                 parent = self.current_span
 
         if references:
