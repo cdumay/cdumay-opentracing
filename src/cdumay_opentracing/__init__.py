@@ -35,9 +35,9 @@ class Span(jaeger_client.Span):
             context = jaeger_client.SpanContext(**ctx)
 
             return cls(
-                context=context, tracer=opentracing.tracer, obj=obj,
+                context=context, tracer=opentracing.tracer,
                 operation_name=getattr(obj, 'operation_name', None),
-                tags=getattr(obj, 'tags', cls.extract_tags(obj)),
+                tags=getattr(obj, 'tags', dict()),
                 start_time=getattr(obj, 'start_time', None)
             )
 
@@ -50,9 +50,8 @@ class Span(jaeger_client.Span):
             context = jaeger_client.SpanContext(**ctx)
 
             return cls(
-                context=context, tracer=opentracing.tracer, obj=obj,
-                operation_name=obj.get('operation_name'),
-                tags=obj.get('tags', cls.extract_tags(obj)),
+                context=context, tracer=opentracing.tracer,
+                operation_name=obj.get('operation_name'), tags=obj.get('tags'),
                 start_time=obj.get('start_time')
             )
 
@@ -150,8 +149,7 @@ class Span(jaeger_client.Span):
 class Tracer(jaeger_client.Tracer):
 
     def start_span(self, operation_name=None, child_of=None, references=None,
-                   tags=None, start_time=None, span_factory=Span,
-                   obj=None):
+                   tags=None, start_time=None, span_factory=Span, obj=None):
         """
         Start and return a new Span representing a unit of work.
 
