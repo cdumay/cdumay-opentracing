@@ -47,8 +47,7 @@ class Span(jaeger_client.Span):
             ctx = dict()
             for attr in ('trace_id', 'span_id', 'parent_id', 'flags'):
                 value = obj.get(attr, None)
-                if value:
-                    ctx[attr] = int(value)
+                ctx[attr] = int(value) if value else None
             context = jaeger_client.SpanContext(**ctx)
 
             return cls(
