@@ -59,13 +59,21 @@ class Span(jaeger_client.Span):
 
     @classmethod
     def span_serialize(cls, span, factory=dict):
-        return factory(
-            trace_id=str(span.context.trace_id),
-            span_id=str(span.context.span_id),
-            parent_id=str(span.context.parent_id), flags=span.context.flags,
-            operation_name=span.operation_name, start_time=span.start_time,
+        params = dict(
+            flags=span.context.flags, operation_name=span.operation_name,
+            start_time=span.start_time,
             tags=dict([tag2value(x) for x in span.tags])
         )
+        if span.context.trace_id:
+            params['trace_id'] = str(span.context.trace_id)
+
+        if span.context.span_id:
+            params['span_id'] = str(span.context.span_id)
+
+        if span.context.parent_id:
+            params['parent_id'] = str(span.context.parent_id)
+
+        return factory(**params)
 
     @classmethod
     def name(cls, obj):
