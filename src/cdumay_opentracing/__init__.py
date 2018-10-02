@@ -46,8 +46,7 @@ class Span(jaeger_client.Span):
         if len(obj) > 0:
             ctx = dict()
             for attr in ('trace_id', 'span_id', 'parent_id', 'flags'):
-                value = obj.get(attr, None)
-                ctx[attr] = int(value) if value else None
+                ctx[attr] = obj.get(attr, None)
             context = jaeger_client.SpanContext(**ctx)
 
             return cls(
@@ -58,21 +57,12 @@ class Span(jaeger_client.Span):
 
     @classmethod
     def span_serialize(cls, span, factory=dict):
-        params = dict(
-            flags=span.context.flags, operation_name=span.operation_name,
-            start_time=span.start_time,
+        return factory(
+            trace_id=span.context.trace_id, span_id=span.context.span_id,
+            parent_id=span.context.parent_id, flags=span.context.flags,
+            operation_name=span.operation_name, start_time=span.start_time,
             tags=dict([tag2value(x) for x in span.tags])
         )
-        if span.context.trace_id:
-            params['trace_id'] = str(span.context.trace_id)
-
-        if span.context.span_id:
-            params['span_id'] = str(span.context.span_id)
-
-        if span.context.parent_id:
-            params['parent_id'] = str(span.context.parent_id)
-
-        return factory(**params)
 
     @classmethod
     def name(cls, obj):
