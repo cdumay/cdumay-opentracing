@@ -6,14 +6,19 @@
 
 
 """
+from typing import AnyStr, Optional, Any, Dict
+
 import jaeger_client
 import opentracing
 import six
+from jaeger_client import SpanContext
 from jaeger_client.constants import SAMPLED_FLAG, DEBUG_FLAG
+from jaeger_client.thrift_gen.jaeger.ttypes import Tag
 from opentracing.ext import tags as ext_tags
 
 
-def tag2value(tag):
+def tag2value(tag: Tag) -> (AnyStr, Optional[Any]):
+    """Try to get find basic value from tag"""
     for attr in ('vBinary', 'vStr', 'vDouble', 'vBool', 'vLong'):
         value = getattr(tag, attr)
         if value:
@@ -22,12 +27,13 @@ def tag2value(tag):
 
 
 class Span(jaeger_client.Span):
-    """"""
+    """Implements jaeger_client.Span"""
     FORMAT = opentracing.Format.TEXT_MAP
     TAGS = []
 
     @classmethod
-    def span_from_object(cls, obj):
+    def span_from_object(cls, obj: Any) -> "Span":
+        """Create span from an object"""
         if obj:
             ctx = dict()
             for attr in ('trace_id', 'span_id', 'parent_id', 'flags'):
@@ -42,7 +48,8 @@ class Span(jaeger_client.Span):
             )
 
     @classmethod
-    def span_from_dict(cls, obj):
+    def span_from_dict(cls, obj: Dict) -> "Span":
+        """Create span from a dict"""
         if len(obj) > 0:
             ctx = dict()
             for attr in ('trace_id', 'span_id', 'parent_id', 'flags'):
@@ -56,8 +63,9 @@ class Span(jaeger_client.Span):
             )
 
     @classmethod
-    def span_serialize(cls, span, factory=dict):
-        return factory(
+    def span_serialize(cls, span: Any) -> Dict:
+        """Serialize span into dict"""
+        return dict(
             trace_id=span.context.trace_id, span_id=span.context.span_id,
             parent_id=span.context.parent_id, flags=span.context.flags,
             operation_name=span.operation_name, start_time=span.start_time,
@@ -65,50 +73,33 @@ class Span(jaeger_client.Span):
         )
 
     @classmethod
-    def name(cls, obj):
-        """ Extract span name from the given object
-
-        :param Any obj: Object to use as context
-        :return: Span name
-        :rtype: str
-        """
+    def name(cls, obj: Any) -> AnyStr:
+        """ Extract span name from the given object"""
         return str(obj)
 
     @classmethod
-    def extract_span(cls, obj):
+    def extract_span(cls, obj: Dict) -> "Span":
+        """Extract data form a dict"""
         return cls.span_from_dict(obj)
 
     @classmethod
-    def inject_span(cls, span, obj):
+    def inject_span(cls, span: Any, obj: Dict):
+        """Append Span into a context"""
         obj.update(cls.span_serialize(span))
 
     @classmethod
-    def extract(cls, obj):
-        """ Extract span context from the given object
-
-        :param Any obj: Object to use as context
-        :return: a SpanContext instance extracted from the inner span object or None if no
-            such span context could be found.
-        """
+    def extract(cls, obj: Any) -> SpanContext:
+        """ Extract span context from the given object"""
         return opentracing.tracer.extract(cls.FORMAT, obj)
 
     @classmethod
-    def inject(cls, span, obj):
-        """ Injects the span context into a `carrier` object.
-
-        :param jaeger_client.SpanContext span: the SpanContext instance
-        :param Any obj: Object to use as context
-        """
+    def inject(cls, span: SpanContext, obj: Any):
+        """ Injects the span context into a `carrier` object."""
         opentracing.tracer.inject(span, cls.FORMAT, obj)
 
     @classmethod
-    def extract_tags(cls, obj):
-        """ Extract tags from the given object
-
-        :param Any obj: Object to use as context
-        :return: Tags to add on span
-        :rtype: dict
-        """
+    def extract_tags(cls, obj: Any) -> Dict:
+        """ Extract tags from the given object"""
         return dict(
             [(attr, getattr(obj, attr, None)) for attr in cls.TAGS]
         )
@@ -147,6 +138,7 @@ class Span(jaeger_client.Span):
 
 
 class Tracer(jaeger_client.Tracer):
+    """Implement jaeger_client.Tracer"""
 
     def start_span(self, operation_name=None, child_of=None, references=None,
                    tags=None, start_time=None, span_factory=Span, obj=None):
